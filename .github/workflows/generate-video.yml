@@ -1,8 +1,14 @@
 name: Générer une vidéo Wan 2.2
 
+run-name: AQUI VIDEO - ${{ inputs.request_id || github.run_id }}
+
 on:
   workflow_dispatch:
     inputs:
+      request_id:
+        description: "Identifiant technique de la demande AQUI NET HUB"
+        required: false
+        type: string
       image_url:
         description: "URL publique directe de l'image JPG/PNG/WEBP à animer"
         required: true
