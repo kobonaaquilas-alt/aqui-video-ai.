@@ -1,0 +1,56 @@
+name: Générer une vidéo Wan 2.2
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_url:
+        description: "URL publique directe de l'image JPG/PNG/WEBP à animer"
+        required: true
+        type: string
+      prompt:
+        description: "Décris le mouvement et l'action"
+        required: true
+        type: string
+      duration:
+        description: "Durée approximative (secondes)"
+        required: true
+        default: "3"
+        type: choice
+        options:
+          - "2"
+          - "3"
+          - "4"
+          - "5"
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dépendances
+        run: pip install gradio_client requests pillow
+
+      - name: Générer le MP4
+        env:
+          IMAGE_URL: ${{ inputs.image_url }}
+          PROMPT: ${{ inputs.prompt }}
+          DURATION: ${{ inputs.duration }}
+        run: python generate.py
+
+      - name: Publier le MP4 comme artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aqui-video-mp4
+          path: output.mp4
+          retention-days: 3
