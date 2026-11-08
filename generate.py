@@ -1,11 +1,11 @@
 import base64
 import os
-import sys
 from io import BytesIO
 from pathlib import Path
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 
 import requests
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from gradio_client import Client
 
 IMAGE_URL = os.environ["IMAGE_URL"].strip()
@@ -15,13 +15,40 @@ DURATION = float(os.environ.get("DURATION", "3"))
 if not IMAGE_URL.startswith(("https://", "http://")):
     raise SystemExit("IMAGE_URL doit être une URL HTTP(S) publique.")
 
+# Convert Dropbox share links into direct-download links.
+parts = urlparse(IMAGE_URL)
+if "dropbox.com" in parts.netloc:
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query["dl"] = "1"
+    query.pop("raw", None)
+    IMAGE_URL = urlunparse(parts._replace(query=urlencode(query)))
+
 print("Téléchargement de l'image source…")
-response = requests.get(IMAGE_URL, timeout=60)
+response = requests.get(
+    IMAGE_URL,
+    headers={"User-Agent": "AQUI-VIDEO-AI/1.0"},
+    timeout=90,
+    allow_redirects=True,
+)
 response.raise_for_status()
+
+content_type = response.headers.get("Content-Type", "").lower()
+if "text/html" in content_type or "application/json" in content_type:
+    raise SystemExit(
+        "Le lien fourni renvoie une page web et non une image. "
+        "Utilise un lien public direct JPG/PNG/WEBP (Dropbox avec dl=1)."
+    )
 if len(response.content) > 12 * 1024 * 1024:
     raise SystemExit("Image trop volumineuse (maximum 12 Mo).")
 
-image = Image.open(BytesIO(response.content)).convert("RGB")
+try:
+    image = Image.open(BytesIO(response.content)).convert("RGB")
+except (UnidentifiedImageError, OSError) as exc:
+    raise SystemExit(
+        "Impossible de lire l'image. Vérifie que le lien est public "
+        "et pointe directement vers un fichier image."
+    ) from exc
+
 image.thumbnail((1280, 1280))
 buffer = BytesIO()
 image.save(buffer, format="JPEG", quality=88)
