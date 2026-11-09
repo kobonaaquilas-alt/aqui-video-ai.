@@ -27,6 +27,9 @@ on:
           - "3"
           - "4"
           - "5"
+          - "6"
+          - "8"
+          - "10"
 
 permissions:
   contents: read
@@ -45,7 +48,10 @@ jobs:
           python-version: "3.11"
 
       - name: Installer les dépendances
-        run: pip install gradio_client requests pillow
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          pip install gradio_client requests pillow
 
       - name: Générer le MP4
         env:
