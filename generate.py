@@ -12,11 +12,11 @@ from gradio_client import Client
 IMAGE_URL = os.environ["IMAGE_URL"].strip()
 PROMPT = os.environ["PROMPT"].strip()
 DURATION = int(float(os.environ.get("DURATION", "3")))
-ALLOWED_DURATIONS = {2, 3, 4, 5, 6, 8, 10}
+ALLOWED_DURATIONS = {2, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60}
 NEGATIVE_PROMPT = "blurry, low quality, distorted, deformed, watermark, bad anatomy, static, shaky camera"
 
 if DURATION not in ALLOWED_DURATIONS:
-    raise SystemExit("Durée non autorisée. Choisis 2, 3, 4, 5, 6, 8 ou 10 secondes.")
+    raise SystemExit("Durée non autorisée. Choisis 2 secondes ou une durée de 15 à 60 secondes par paliers de 5 secondes.")
 if not IMAGE_URL.startswith(("https://", "http://")):
     raise SystemExit("IMAGE_URL doit être une URL HTTP(S) publique.")
 
